@@ -1,0 +1,110 @@
+Quero criar um aplicativo simples e intuitivo para registrar pedidos de vendas de pizza, caldos e comidas típicas, usado por vendedores, com painel administrativo para acompanhamento.
+
+Usuários
+
+Administrador: acompanha vendas, pagamentos e entregas.
+
+Vendedores: registram pedidos.
+
+Produtos
+
+Caldos (3 tipos) → Tamanho: Pequeno e Grande
+
+Pizza → 1 tamanho, 1 sabor
+
+Comida típica → Canjiquinha, Vaca Atolada, Feijão Amigo
+
+Cadastro de Pedido (Fluxo do Vendedor)
+
+Selecionar produto → escolher tamanho (se aplicável).
+
+Informar quantidade.
+
+Escolher forma de pagamento: Dinheiro, Pix, Em aberto.
+
+Marcar Status de pagamento: ✅ Realizado | ⏳ Pendente.
+
+Marcar Status de entrega: ✅ Realizada | ⏳ Pendente.
+
+Confirmar pedido.
+
+Banco de Dados do Pedido
+
+Cada pedido deve armazenar:
+
+Produto(s), tamanho e quantidade
+
+Valor total
+
+Forma de pagamento
+
+Status do pagamento (realizado ou pendente)
+
+Status da entrega (realizada ou pendente)
+
+Nome do cliente (opcional, só quando for “em aberto”)
+
+Nome do vendedor
+
+Data e hora
+
+Relatórios para Administrador
+
+Vendas por produto (quantidade e valores)
+
+Vendas por vendedor
+
+Controle financeiro (quanto em dinheiro, pix e em aberto)
+
+Quantos pedidos estão pagos e quantos pendentes
+
+Quantos pedidos foram entregues e quantos ainda não
+
+Exportar relatórios para Excel (opcional)
+
+Comprovante de Pedido (Ticket em PDF)
+
+Após registrar o pedido, o vendedor pode gerar um comprovante estilo ticket, pequeno e simples, em PDF.
+Esse comprovante pode ser enviado por WhatsApp ou exibido ao cliente.
+
+Campos do Ticket:
+
+Nome do negócio (logo opcional)
+
+Número do pedido
+
+Data e hora
+
+Lista de produtos e valores
+
+Total do pedido
+
+Forma de pagamento
+
+Status do pagamento (Pago ✅ ou Pendente ❌)
+
+Status da entrega (Entregue ✅ ou Pendente ❌)
+
+Nome do vendedor
+
+Mensagem de rodapé personalizada (“Obrigado pela preferência!”)
+
+Melhorias Futuras (se possível)
+
+QR Code no ticket para pagamento via Pix.
+
+Histórico de clientes (para controle dos que ficaram “em aberto”).
+
+Notificação para vendedores ao registrar pedido.
+
+Controle de estoque básico.
+
+Objetivo Final
+
+Um aplicativo:
+
+Simples para vendedores usarem (poucos cliques para registrar pedidos).
+
+Completo para o administrador (monitoramento de vendas, pagamentos e entregas).
+
+Com recibo em PDF para passar confiança ao cliente.

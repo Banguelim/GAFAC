@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0 0% 98.04%);
+  --foreground: hsl(210 25% 7.84%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(210 25% 7.84%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(210 25% 7.84%);
+  --primary: hsl(14.32 91.09% 55.49%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(122.65 39.64% 49.22%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(210 40% 96%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(207.27 90.48% 54.12%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(14.32 91.09% 55.49%);
+  --chart-1: hsl(14.32 91.09% 55.49%);
+  --chart-2: hsl(122.65 39.64% 49.22%);
+  --chart-3: hsl(33.06 92.47% 54.9%);
+  --chart-4: hsl(147.14 78.5% 41.96%);
+  --chart-5: hsl(341.49 75.2% 50.98%);
+  --sidebar: hsl(0 0% 98.04%);
+  --sidebar-foreground: hsl(210 25% 7.84%);
+  --sidebar-primary: hsl(14.32 91.09% 55.49%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(214.3 31.8% 91.4%);
+  --sidebar-accent-foreground: hsl(14.32 91.09% 55.49%);
+  --sidebar-border: hsl(214.3 31.8% 91.4%);
+  --sidebar-ring: hsl(14.32 91.09% 55.49%);
+  --font-sans: Roboto, system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: hsl(0 0% 3.9%);
+  --foreground: hsl(0 0% 98%);
+  --card: hsl(0 0% 3.9%);
+  --card-foreground: hsl(0 0% 98%);
+  --popover: hsl(0 0% 3.9%);
+  --popover-foreground: hsl(0 0% 98%);
+  --primary: hsl(14.32 91.09% 55.49%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(122.65 39.64% 49.22%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(0 0% 14.9%);
+  --muted-foreground: hsl(0 0% 63.9%);
+  --accent: hsl(207.27 90.48% 54.12%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(0 0% 14.9%);
+  --input: hsl(0 0% 14.9%);
+  --ring: hsl(14.32 91.09% 55.49%);
+  --chart-1: hsl(220 70% 50%);
+  --chart-2: hsl(160 60% 45%);
+  --chart-3: hsl(30 80% 55%);
+  --chart-4: hsl(280 65% 60%);
+  --chart-5: hsl(340 75% 55%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer components {
+  .primary {
+    background-color: #FF5722;
+  }
+  
+  .secondary {
+    background-color: #4CAF50;
+  }
+  
+  .accent {
+    background-color: #2196F3;
+  }
+  
+  .warning {
+    background-color: #FF9800;
+  }
+}
