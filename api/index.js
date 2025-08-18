@@ -358,14 +358,183 @@ export default async function handler(req, res) {
       
       const todayOrders = orders.filter(o => o.createdAt.startsWith(today));
       
+      // Calcular stats de produtos
+      const productStatsMap = {};
+      orderItems.forEach(item => {
+        const order = orders.find(o => o.id === item.orderId);
+        if (order && order.createdAt.startsWith(today)) {
+          const product = products.find(p => p.id === item.productId);
+          const productName = product ? product.name : 'Produto não encontrado';
+          
+          if (!productStatsMap[item.productId]) {
+            productStatsMap[item.productId] = {
+              productId: item.productId,
+              productName: productName,
+              quantity: 0,
+              revenue: 0
+            };
+          }
+          
+          productStatsMap[item.productId].quantity += item.quantity;
+          productStatsMap[item.productId].revenue += item.totalPrice;
+        }
+      });
+      
+      // Calcular stats de vendedores
+      const vendorStatsMap = {};
+      todayOrders.forEach(order => {
+        const vendor = users.find(u => u.id === order.vendorId);
+        const vendorName = vendor ? vendor.name : 'Vendedor não encontrado';
+        
+        if (!vendorStatsMap[order.vendorId]) {
+          vendorStatsMap[order.vendorId] = {
+            vendorId: order.vendorId,
+            vendorName: vendorName,
+            orderCount: 0,
+            revenue: 0
+          };
+        }
+        
+        vendorStatsMap[order.vendorId].orderCount += 1;
+        vendorStatsMap[order.vendorId].revenue += order.totalAmount;
+      });
+      
+      // Calcular stats de pagamento
+      const paymentStats = {
+        dinheiro: 0,
+        pix: 0,
+        aberto: 0
+      };
+      
+      todayOrders.forEach(order => {
+        if (paymentStats.hasOwnProperty(order.paymentMethod)) {
+          paymentStats[order.paymentMethod] += order.totalAmount;
+        }
+      });
+      
       const stats = {
         ordersToday: todayOrders.length,
         revenueToday: todayOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0),
         pendingPayments: orders.filter(o => o.paymentStatus === 'pendente').length,
-        pendingDeliveries: orders.filter(o => o.deliveryStatus === 'preparando').length
+        pendingDeliveries: orders.filter(o => o.deliveryStatus === 'preparando').length,
+        productStats: Object.values(productStatsMap),
+        vendorStats: Object.values(vendorStatsMap),
+        paymentStats: paymentStats
       };
       
       return res.json(stats);
+    }
+
+    // PDF ticket generation
+    if (path.startsWith('/api/orders/') && path.includes('/ticket') && req.method === 'POST') {
+      const orderId = parts[2];
+      
+      const order = orders.find(o => o.id === orderId);
+      if (!order) {
+        return res.status(404).json({ message: 'Pedido não encontrado' });
+      }
+
+      // Buscar itens do pedido
+      const items = orderItems
+        .filter(item => item.orderId === orderId)
+        .map(item => {
+          const product = products.find(p => p.id === item.productId);
+          return {
+            ...item,
+            product: product || { name: 'Produto não encontrado', price: 0 },
+            productName: product ? product.name : 'Produto não encontrado'
+          };
+        });
+
+      // Buscar dados do vendor
+      const vendor = users.find(u => u.id === order.vendorId) || { name: 'Vendedor não encontrado' };
+
+      // Gerar PDF simples como HTML (para ser convertido pelo navegador)
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Comprovante de Pedido #${order.orderNumber}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+        .section { margin-bottom: 15px; }
+        .label { font-weight: bold; }
+        .items { border-collapse: collapse; width: 100%; margin: 10px 0; }
+        .items th, .items td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .items th { background-color: #f2f2f2; }
+        .total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 15px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        @media print { body { margin: 0; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>GAFAC VENDAS</h1>
+        <h2>Comprovante de Pedido</h2>
+        <p><strong>Pedido #${order.orderNumber}</strong></p>
+    </div>
+    
+    <div class="section">
+        <p><span class="label">Data:</span> ${new Date(order.createdAt).toLocaleString('pt-BR')}</p>
+        <p><span class="label">Cliente:</span> ${order.customerName}</p>
+        <p><span class="label">Telefone:</span> ${order.customerPhone}</p>
+        <p><span class="label">Vendedor:</span> ${vendor.name}</p>
+    </div>
+    
+    <div class="section">
+        <h3>Itens do Pedido:</h3>
+        <table class="items">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Qtd</th>
+                    <th>Valor Unit.</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${items.map(item => `
+                    <tr>
+                        <td>${item.productName}</td>
+                        <td>${item.quantity}</td>
+                        <td>R$ ${Number(item.unitPrice).toFixed(2)}</td>
+                        <td>R$ ${Number(item.totalPrice).toFixed(2)}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section">
+        <p><span class="label">Forma de Pagamento:</span> ${order.paymentMethod.toUpperCase()}</p>
+        <p><span class="label">Status do Pagamento:</span> ${order.paymentStatus}</p>
+        <p><span class="label">Status da Entrega:</span> ${order.deliveryStatus}</p>
+    </div>
+    
+    <div class="total">
+        <p>TOTAL: R$ ${Number(order.totalAmount).toFixed(2)}</p>
+    </div>
+    
+    <div class="footer">
+        <p>Obrigado pela preferência!</p>
+        <p>Sistema GAFAC - ${new Date().getFullYear()}</p>
+        <p><em>Este comprovante pode ser impresso usando Ctrl+P</em></p>
+    </div>
+    
+    <script>
+        // Auto-abrir diálogo de impressão
+        window.onload = function() {
+            window.print();
+        }
+    </script>
+</body>
+</html>`;
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Content-Disposition', `inline; filename="pedido-${order.orderNumber}.html"`);
+      return res.send(htmlContent);
     }
 
     // Para outras rotas, retornar erro 404

@@ -121,13 +121,25 @@ export function useGenerateTicket() {
       
       if (!response.ok) throw new Error('Failed to generate ticket');
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `pedido-${orderId}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      // A API retorna HTML que pode ser aberto em nova janela para impressão
+      const htmlContent = await response.text();
+      
+      // Abrir em nova janela para impressão
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        // A janela vai auto-abrir o diálogo de impressão via JavaScript
+      } else {
+        // Fallback: criar blob e download
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `comprovante-pedido-${orderId}.html`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
     },
   });
 }
