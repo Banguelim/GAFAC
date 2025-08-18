@@ -125,14 +125,7 @@ export default function LoginModal({ isOpen, onClose, onRegisterClick }: LoginMo
           </div>
         </form>
 
-        {/* Credenciais de demonstração */}
-        <div className="border-t pt-4 mt-4">
-          <p className="text-xs text-gray-500 mb-2">Contas de demonstração:</p>
-          <div className="text-xs space-y-1 text-gray-600">
-            <div><strong>Admin:</strong> admin / admin123</div>
-            <div><strong>Vendedor:</strong> vendedor1 / vend123</div>
-          </div>
-        </div>
+
       </DialogContent>
     </Dialog>
   );
