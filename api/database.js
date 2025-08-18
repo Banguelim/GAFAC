@@ -1,11 +1,8 @@
 // Upstash Redis Database - Redis persistente
 import { Redis } from '@upstash/redis';
 
-// Inicializar Redis com variáveis de ambiente do Upstash
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
+// Inicializar Redis automaticamente com variáveis de ambiente
+const redis = Redis.fromEnv();
 
 // Chaves para o Redis
 const KEYS = {
