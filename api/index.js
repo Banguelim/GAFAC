@@ -191,6 +191,7 @@ export default async function handler(req, res) {
             const product = products.find(p => p.id === item.productId);
             return {
               ...item,
+              product: product || { name: 'Produto não encontrado', price: 0 },
               productName: product ? product.name : 'Produto não encontrado'
             };
           });
@@ -199,6 +200,30 @@ export default async function handler(req, res) {
       });
       
       return res.json(ordersWithItems);
+    }
+
+    // Get single order
+    if (path.startsWith('/api/orders/') && !path.includes('/status') && !path.includes('/ticket') && req.method === 'GET') {
+      const orderId = parts[2];
+      
+      const order = orders.find(o => o.id === orderId);
+      if (!order) {
+        return res.status(404).json({ message: 'Pedido não encontrado' });
+      }
+
+      // Buscar itens do pedido
+      const items = orderItems
+        .filter(item => item.orderId === orderId)
+        .map(item => {
+          const product = products.find(p => p.id === item.productId);
+          return {
+            ...item,
+            product: product || { name: 'Produto não encontrado', price: 0 },
+            productName: product ? product.name : 'Produto não encontrado'
+          };
+        });
+
+      return res.json({ ...order, items });
     }
 
     if (path === '/api/orders' && req.method === 'POST') {

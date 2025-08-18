@@ -108,11 +108,16 @@ export default function VendorDashboard() {
       </nav>
 
       {/* Ticket Modal */}
-      <TicketModal
-        isOpen={showTicketModal}
-        onClose={() => setShowTicketModal(false)}
-        orderId={selectedOrderId}
-      />
+      {selectedOrderId && (
+        <TicketModal
+          isOpen={showTicketModal}
+          onClose={() => {
+            setShowTicketModal(false);
+            setSelectedOrderId(null);
+          }}
+          orderId={selectedOrderId}
+        />
+      )}
     </div>
   );
 }

@@ -349,6 +349,23 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
 
 
 
+        {/* Total Summary */}
+        {selectedProducts.length > 0 && (
+          <Card className="border-2 border-primary bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold text-gray-900">Total do Pedido:</span>
+                <span className="text-2xl font-bold text-primary">
+                  R$ {totalAmount.toFixed(2)}
+                </span>
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                {selectedProducts.length} item{selectedProducts.length > 1 ? 's' : ''} selecionado{selectedProducts.length > 1 ? 's' : ''}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Action Buttons */}
         <div className="space-y-3">
           <Button
@@ -356,8 +373,8 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
             className="w-full bg-primary text-white py-4 text-lg font-semibold hover:bg-primary/90 shadow-lg"
             disabled={createOrder.isPending || selectedProducts.length === 0}
           >
-            <Check className="h-5 w-5 mr-2" />
-            {createOrder.isPending ? "Registrando..." : "Confirmar Pedido"}
+            <Receipt className="h-5 w-5 mr-2" />
+            {createOrder.isPending ? "Registrando..." : `Confirmar Pedido - R$ ${totalAmount.toFixed(2)}`}
           </Button>
         </div>
       </form>

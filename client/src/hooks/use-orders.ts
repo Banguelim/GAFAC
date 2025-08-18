@@ -17,6 +17,11 @@ export function useOrders(limit?: number) {
 export function useOrder(id: string) {
   return useQuery<OrderWithDetails>({
     queryKey: ["/api/orders", id],
+    queryFn: async () => {
+      const response = await fetch(`/api/orders/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch order');
+      return response.json();
+    },
     enabled: !!id,
   });
 }
