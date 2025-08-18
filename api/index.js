@@ -183,7 +183,7 @@ export default async function handler(req, res) {
       const sortedOrders = orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       const limitedOrders = limit ? sortedOrders.slice(0, limit) : sortedOrders;
       
-      // Para cada pedido, buscar os itens
+      // Para cada pedido, buscar os itens e dados do vendor
       const ordersWithItems = limitedOrders.map(order => {
         const items = orderItems
           .filter(item => item.orderId === order.id)
@@ -196,7 +196,17 @@ export default async function handler(req, res) {
             };
           });
         
-        return { ...order, items };
+        // Buscar dados do vendor
+        const vendor = users.find(u => u.id === order.vendorId) || { name: 'Vendedor não encontrado', id: order.vendorId };
+        
+        return { 
+          ...order, 
+          items,
+          vendor: {
+            id: vendor.id,
+            name: vendor.name
+          }
+        };
       });
       
       return res.json(ordersWithItems);
@@ -223,7 +233,17 @@ export default async function handler(req, res) {
           };
         });
 
-      return res.json({ ...order, items });
+      // Buscar dados do vendor
+      const vendor = users.find(u => u.id === order.vendorId) || { name: 'Vendedor não encontrado', id: order.vendorId };
+
+      return res.json({ 
+        ...order, 
+        items,
+        vendor: {
+          id: vendor.id,
+          name: vendor.name
+        }
+      });
     }
 
     if (path === '/api/orders' && req.method === 'POST') {

@@ -42,10 +42,10 @@ export default function OrdersTable() {
 
   const filteredOrders = orders?.filter(order => 
     order.orderNumber.toString().includes(searchTerm) ||
-    order.vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.items.some(item => 
-      item.product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    (order.vendor?.name && order.vendor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (order.items && order.items.some(item => 
+      item.product?.name && item.product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ))
   ) || [];
 
   const handleStatusUpdate = async (orderId: string, field: 'paymentStatus' | 'deliveryStatus', value: string) => {
@@ -150,13 +150,13 @@ export default function OrdersTable() {
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">
-                      {order.items.map(item => item.product.name).join(', ')}
+                      {order.items?.map(item => item.product?.name || 'Produto').join(', ') || 'Sem produtos'}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {order.items.map(item => `${item.quantity}x`).join(', ')}
+                      {order.items?.map(item => `${item.quantity || 0}x`).join(', ') || ''}
                     </div>
                   </TableCell>
-                  <TableCell className="text-gray-900">{order.vendor.name}</TableCell>
+                  <TableCell className="text-gray-900">{order.vendor?.name || 'Vendedor'}</TableCell>
                   <TableCell className="font-semibold text-gray-900">
                     R$ {Number(order.totalAmount).toFixed(2)}
                   </TableCell>
