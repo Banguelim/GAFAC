@@ -1,29 +1,123 @@
-// API Serverless simplificada para Vercel (in-memory data)
-// Dados em memória - serão reinicializados a cada deploy
-let users = [
-  {
-    id: '1',
-    username: 'admin',
-    name: 'Administrador',
-    password: 'gafac123',
-    role: 'admin',
-    active: true,
-    createdAt: new Date().toISOString()
-  }
-];
+// API Serverless com dados persistentes simulados
+// Dados iniciais que são recarregados sempre que necessário
+function getInitialUsers() {
+  return [
+    {
+      id: '1',
+      username: 'admin',
+      name: 'Administrador',
+      password: 'gafac123',
+      role: 'admin',
+      active: true,
+      createdAt: new Date().toISOString()
+    }
+  ];
+}
 
-let products = [
-  { id: '1', name: 'Canjiquinha', type: 'tipica', size: 'marmitex', price: 20, active: true },
-  { id: '2', name: 'Canjiquinha', type: 'tipica', size: 'cumbuquinha', price: 10, active: true },
-  { id: '3', name: 'Feijão amigo', type: 'tipica', size: 'marmitex', price: 20, active: true },
-  { id: '4', name: 'Feijão amigo', type: 'tipica', size: 'cumbuquinha', price: 10, active: true },
-  { id: '5', name: 'Vaca atolada', type: 'tipica', size: 'marmitex', price: 25, active: true },
-  { id: '6', name: 'Vaca atolada', type: 'tipica', size: 'cumbuquinha', price: 15, active: true }
-];
+function getInitialProducts() {
+  return [
+    { id: '1', name: 'Canjiquinha', type: 'tipica', size: 'marmitex', price: 20, active: true },
+    { id: '2', name: 'Canjiquinha', type: 'tipica', size: 'cumbuquinha', price: 10, active: true },
+    { id: '3', name: 'Feijão amigo', type: 'tipica', size: 'marmitex', price: 20, active: true },
+    { id: '4', name: 'Feijão amigo', type: 'tipica', size: 'cumbuquinha', price: 10, active: true },
+    { id: '5', name: 'Vaca atolada', type: 'tipica', size: 'marmitex', price: 25, active: true },
+    { id: '6', name: 'Vaca atolada', type: 'tipica', size: 'cumbuquinha', price: 15, active: true }
+  ];
+}
 
+// Dados em memória (reinicializados a cada instância serverless)
+let users = getInitialUsers();
+let products = getInitialProducts();
 let orders = [];
 let orderItems = [];
 let orderCounter = 1;
+
+// Simular alguns dados de exemplo para demonstração
+function seedExampleData() {
+  // Adicionar alguns pedidos de exemplo se não existirem
+  if (orders.length === 0) {
+    const today = new Date().toISOString();
+    
+    // Pedido 1
+    const order1 = {
+      id: 'example-1',
+      orderNumber: `ORD-${Date.now() - 1000}`,
+      customerName: 'Cliente Exemplo',
+      customerPhone: '(11) 99999-9999',
+      totalAmount: 45,
+      paymentMethod: 'dinheiro',
+      paymentStatus: 'realizado',
+      deliveryStatus: 'realizada',
+      vendorId: '1',
+      notes: 'Pedido de exemplo',
+      createdAt: today
+    };
+    
+    const items1 = [
+      {
+        id: 'item-1-1',
+        orderId: 'example-1',
+        productId: '1',
+        quantity: 1,
+        unitPrice: 20,
+        totalPrice: 20
+      },
+      {
+        id: 'item-1-2',
+        orderId: 'example-1',
+        productId: '2',
+        quantity: 2,
+        unitPrice: 10,
+        totalPrice: 20
+      },
+      {
+        id: 'item-1-3',
+        orderId: 'example-1',
+        productId: '6',
+        quantity: 1,
+        unitPrice: 15,
+        totalPrice: 15
+      }
+    ];
+    
+    // Pedido 2
+    const order2 = {
+      id: 'example-2',
+      orderNumber: `ORD-${Date.now() - 500}`,
+      customerName: 'Outro Cliente',
+      customerPhone: '(11) 88888-8888',
+      totalAmount: 30,
+      paymentMethod: 'pix',
+      paymentStatus: 'realizado',
+      deliveryStatus: 'preparando',
+      vendorId: '1',
+      notes: '',
+      createdAt: today
+    };
+    
+    const items2 = [
+      {
+        id: 'item-2-1',
+        orderId: 'example-2',
+        productId: '3',
+        quantity: 1,
+        unitPrice: 20,
+        totalPrice: 20
+      },
+      {
+        id: 'item-2-2',
+        orderId: 'example-2',
+        productId: '4',
+        quantity: 1,
+        unitPrice: 10,
+        totalPrice: 10
+      }
+    ];
+    
+    orders.push(order1, order2);
+    orderItems.push(...items1, ...items2);
+  }
+}
 
 // Função para gerar IDs únicos
 function generateId() {
@@ -77,6 +171,9 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Garantir que dados de exemplo existam (para demonstração)
+  seedExampleData();
+
   const { parts, query } = parseUrl(req.url);
   const path = '/' + parts.join('/');
 
@@ -86,13 +183,26 @@ export default async function handler(req, res) {
 
     // Health check
     if (path === '/api/health') {
+      const today = new Date().toISOString().split('T')[0];
+      const todayOrders = orders.filter(o => o.createdAt.startsWith(today));
+      
       return res.status(200).json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
         environment: 'vercel',
-        users: users.length,
-        products: products.length,
-        orders: orders.length
+        data: {
+          users: users.length,
+          products: products.length,
+          totalOrders: orders.length,
+          todayOrders: todayOrders.length,
+          todayRevenue: todayOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0),
+          sampleOrder: orders[0] || null
+        },
+        timezone: {
+          current: new Date().toISOString(),
+          today: today,
+          localTime: new Date().toLocaleString('pt-BR')
+        }
       });
     }
 
@@ -356,7 +466,16 @@ export default async function handler(req, res) {
     if (path === '/api/stats' && req.method === 'GET') {
       const today = new Date().toISOString().split('T')[0];
       
+      console.log('[STATS DEBUG]', {
+        today,
+        totalOrders: orders.length,
+        allOrderDates: orders.map(o => ({ id: o.id, date: o.createdAt })),
+        timezone: new Date().toLocaleString('pt-BR')
+      });
+      
       const todayOrders = orders.filter(o => o.createdAt.startsWith(today));
+      
+      console.log('[STATS DEBUG] Today Orders:', todayOrders.length, todayOrders.map(o => o.id));
       
       // Calcular stats de produtos
       const productStatsMap = {};
