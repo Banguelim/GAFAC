@@ -20,9 +20,22 @@ interface MultiProductSelectorProps {
 export default function MultiProductSelector({ selectedProducts, onChange }: MultiProductSelectorProps) {
   const [openCategory, setOpenCategory] = useState<string | null>("tipica"); // Abre "Comida Típica" por padrão
 
-  const { data: products = [] } = useQuery<Product[]>({
+  const { data: products = [], isLoading, error } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    retry: 3,
   });
+
+  // Early return se houver erro ou carregando
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p className="text-red-600">Erro ao carregar produtos. Tente recarregar a página.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Group products by type
   const productsByType = products.reduce((acc, product) => {
@@ -73,43 +86,71 @@ export default function MultiProductSelector({ selectedProducts, onChange }: Mul
   };
 
   const toggleProduct = (product: Product, checked: boolean) => {
-    if (checked) {
-      // Adicionar produto
-      const newSelectedProduct: SelectedProduct = {
-        product,
-        quantity: 1,
-        subtotal: Number(product.price)
-      };
-      onChange([...selectedProducts, newSelectedProduct]);
-    } else {
-      // Remover produto
-      onChange(selectedProducts.filter(sp => sp.product.id !== product.id));
+    try {
+      if (checked) {
+        // Verificar se já não está selecionado (evitar duplicatas)
+        if (selectedProducts.some(sp => sp.product.id === product.id)) {
+          return;
+        }
+        
+        // Adicionar produto
+        const newSelectedProduct: SelectedProduct = {
+          product,
+          quantity: 1,
+          subtotal: Number(product.price)
+        };
+        onChange([...selectedProducts, newSelectedProduct]);
+      } else {
+        // Remover produto
+        const filtered = selectedProducts.filter(sp => sp.product.id !== product.id);
+        onChange(filtered);
+      }
+    } catch (error) {
+      console.error('Erro ao alterar produto:', error);
     }
   };
 
   const updateProductQuantity = (productId: string, delta: number) => {
-    const updatedProducts = selectedProducts.map(sp => {
-      if (sp.product.id === productId) {
-        const newQuantity = Math.max(1, sp.quantity + delta);
-        return {
-          ...sp,
-          quantity: newQuantity,
-          subtotal: Number(sp.product.price) * newQuantity
-        };
-      }
-      return sp;
-    });
-    onChange(updatedProducts);
+    try {
+      const updatedProducts = selectedProducts.map(sp => {
+        if (sp.product.id === productId) {
+          const newQuantity = Math.max(1, sp.quantity + delta);
+          return {
+            ...sp,
+            quantity: newQuantity,
+            subtotal: Number(sp.product.price) * newQuantity
+          };
+        }
+        return sp;
+      });
+      onChange(updatedProducts);
+    } catch (error) {
+      console.error('Erro ao atualizar quantidade:', error);
+    }
   };
 
   const totalAmount = selectedProducts.reduce((sum, sp) => sum + sp.subtotal, 0);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-3">
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-32 bg-gray-200 rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
       {/* Lista de categorias */}
       <div className="space-y-3">
         {Object.entries(productsByType).map(([category, categoryProducts]) => (
-          <Card key={category}>
+          <Card key={`category-${category}`}>
             <CardHeader className="pb-3">
               <button
                 type="button"
@@ -136,7 +177,7 @@ export default function MultiProductSelector({ selectedProducts, onChange }: Mul
                   const subtotal = Number(product.price) * quantity;
 
                   return (
-                    <div key={product.id} className="border border-gray-200 rounded-lg p-4">
+                    <div key={`product-${product.id}-${category}`} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1">
                           <Checkbox
@@ -204,7 +245,7 @@ export default function MultiProductSelector({ selectedProducts, onChange }: Mul
           <CardContent>
             <div className="space-y-2">
               {selectedProducts.map((sp) => (
-                <div key={sp.product.id} className="flex justify-between text-sm">
+                <div key={`summary-${sp.product.id}`} className="flex justify-between text-sm">
                   <span>{sp.quantity}x {sp.product.name} ({sp.product.size})</span>
                   <span className="font-medium">R$ {sp.subtotal.toFixed(2)}</span>
                 </div>

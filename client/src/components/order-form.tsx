@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import MultiProductSelector, { type SelectedProduct } from "@/components/multi-product-selector";
+import ErrorBoundary from "@/components/error-boundary";
 import { useCreateOrder } from "@/hooks/use-orders";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -48,7 +49,16 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
   });
 
   const paymentMethod = form.watch("paymentMethod");
-  const totalAmount = selectedProducts.reduce((sum, sp) => sum + sp.subtotal, 0);
+  
+  // Memoizar cálculo do total para evitar recalculos desnecessários
+  const totalAmount = useMemo(() => {
+    return selectedProducts.reduce((sum, sp) => sum + (sp.subtotal || 0), 0);
+  }, [selectedProducts]);
+
+  // Callback otimizado para mudanças de produtos
+  const handleProductsChange = useCallback((products: SelectedProduct[]) => {
+    setSelectedProducts(products);
+  }, []);
 
   const onSubmit = async (data: OrderFormData) => {
     if (selectedProducts.length === 0) {
@@ -96,12 +106,15 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
         description: `Pedido #${result.orderNumber.toString().padStart(3, '0')} criado`,
       });
 
-      form.reset();
-      setSelectedProducts([]);
-      
-      if (onSuccess) {
-        onSuccess(result.id);
-      }
+      // Reset de forma mais segura
+      setTimeout(() => {
+        form.reset();
+        setSelectedProducts([]);
+        
+        if (onSuccess) {
+          onSuccess(result.id);
+        }
+      }, 100);
     } catch (error) {
       toast({
         title: "Erro ao registrar pedido",
@@ -169,10 +182,12 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
         </Card>
 
         {/* Product Selection */}
-        <MultiProductSelector 
-          selectedProducts={selectedProducts}
-          onChange={setSelectedProducts}
-        />
+        <ErrorBoundary>
+          <MultiProductSelector 
+            selectedProducts={selectedProducts}
+            onChange={handleProductsChange}
+          />
+        </ErrorBoundary>
 
         {/* Payment Information */}
         <Card>
