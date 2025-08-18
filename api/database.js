@@ -1,5 +1,11 @@
-// Vercel KV Database - Redis persistente
-import { kv } from '@vercel/kv';
+// Upstash Redis Database - Redis persistente
+import { Redis } from '@upstash/redis';
+
+// Inicializar Redis com variáveis de ambiente do Upstash
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 // Chaves para o Redis
 const KEYS = {
@@ -26,7 +32,7 @@ function getToday() {
 
 export async function getUsers() {
   try {
-    const users = await kv.get(KEYS.USERS);
+    const users = await redis.get(KEYS.USERS);
     return users || [];
   } catch (error) {
     console.error('Error getting users:', error);
@@ -45,7 +51,7 @@ export async function createUser(userData) {
     };
     
     users.push(newUser);
-    await kv.set(KEYS.USERS, users);
+    await redis.set(KEYS.USERS, users);
     
     return newUser;
   } catch (error) {
@@ -70,7 +76,7 @@ export async function getUserByUsername(username) {
 
 export async function getProducts() {
   try {
-    const products = await kv.get(KEYS.PRODUCTS);
+    const products = await redis.get(KEYS.PRODUCTS);
     return products || [];
   } catch (error) {
     console.error('Error getting products:', error);
@@ -89,7 +95,7 @@ export async function createProduct(productData) {
     };
     
     products.push(newProduct);
-    await kv.set(KEYS.PRODUCTS, products);
+    await redis.set(KEYS.PRODUCTS, products);
     
     return newProduct;
   } catch (error) {
@@ -104,7 +110,7 @@ export async function createProduct(productData) {
 
 export async function getOrders() {
   try {
-    const orders = await kv.get(KEYS.ORDERS);
+    const orders = await redis.get(KEYS.ORDERS);
     return orders || [];
   } catch (error) {
     console.error('Error getting orders:', error);
@@ -125,7 +131,7 @@ export async function getOrder(id) {
 export async function createOrder(orderData, itemsData) {
   try {
     // Incrementar contador
-    const counter = await kv.incr(KEYS.COUNTER);
+    const counter = await redis.incr(KEYS.COUNTER);
     
     // Criar pedido
     const newOrder = {
@@ -149,8 +155,8 @@ export async function createOrder(orderData, itemsData) {
     orders.push(newOrder);
     orderItems.push(...newItems);
     
-    await kv.set(KEYS.ORDERS, orders);
-    await kv.set(KEYS.ORDER_ITEMS, orderItems);
+    await redis.set(KEYS.ORDERS, orders);
+    await redis.set(KEYS.ORDER_ITEMS, orderItems);
     
     return { ...newOrder, items: newItems };
   } catch (error) {
@@ -188,10 +194,10 @@ export async function updateOrder(id, orderUpdate, itemsUpdate) {
       }));
       
       filteredItems.push(...newItems);
-      await kv.set(KEYS.ORDER_ITEMS, filteredItems);
+      await redis.set(KEYS.ORDER_ITEMS, filteredItems);
     }
     
-    await kv.set(KEYS.ORDERS, orders);
+    await redis.set(KEYS.ORDERS, orders);
     
     // Retornar pedido atualizado com itens
     const updatedItems = await getOrderItems();
@@ -215,8 +221,8 @@ export async function deleteOrder(id) {
     // Remover itens do pedido
     const filteredItems = orderItems.filter(item => item.orderId !== id);
     
-    await kv.set(KEYS.ORDERS, filteredOrders);
-    await kv.set(KEYS.ORDER_ITEMS, filteredItems);
+    await redis.set(KEYS.ORDERS, filteredOrders);
+    await redis.set(KEYS.ORDER_ITEMS, filteredItems);
     
     return true;
   } catch (error) {
@@ -231,7 +237,7 @@ export async function deleteOrder(id) {
 
 export async function getOrderItems() {
   try {
-    const orderItems = await kv.get(KEYS.ORDER_ITEMS);
+    const orderItems = await redis.get(KEYS.ORDER_ITEMS);
     return orderItems || [];
   } catch (error) {
     console.error('Error getting order items:', error);
@@ -340,7 +346,7 @@ export async function initializeDatabase() {
     const users = await getUsers();
     if (users.length === 0) {
       console.log('🔧 Inicializando usuários...');
-      await kv.set(KEYS.USERS, [
+      await redis.set(KEYS.USERS, [
         {
           id: '1',
           username: 'admin',
@@ -357,7 +363,7 @@ export async function initializeDatabase() {
     const products = await getProducts();
     if (products.length === 0) {
       console.log('🔧 Inicializando produtos...');
-      await kv.set(KEYS.PRODUCTS, [
+      await redis.set(KEYS.PRODUCTS, [
         { id: '1', name: 'Canjiquinha', type: 'tipica', size: 'marmitex', price: 20, active: true },
         { id: '2', name: 'Canjiquinha', type: 'tipica', size: 'cumbuquinha', price: 10, active: true },
         { id: '3', name: 'Feijão amigo', type: 'tipica', size: 'marmitex', price: 20, active: true },

@@ -1,42 +1,46 @@
-# 🗄️ SETUP VERCEL KV (Redis Persistente)
+# 🗄️ SETUP UPSTASH REDIS (Redis Persistente)
 
 ## ⚠️ IMPORTANTE: Banco de Dados Persistente Implementado
 
-O sistema agora usa **Vercel KV (Redis)** para armazenar dados permanentemente. 
+O sistema agora usa **Upstash Redis** para armazenar dados permanentemente. 
 **Não mais arrays JavaScript em memória** que são perdidos a cada deploy.
 
 ## 🚀 PASSOS PARA CONFIGURAÇÃO:
 
-### **1. Habilitar Vercel KV**
+### **1. Habilitar Upstash Redis**
 
 No dashboard do Vercel:
 
 1. **Acesse seu projeto:** https://vercel.com/dashboard
-2. **Vá em "Storage"** na aba lateral
-3. **Clique em "Create Database"**
-4. **Selecione "Vercel KV"**
-5. **Nome:** `gafac-db` 
-6. **Região:** São Paulo (ou mais próxima)
-7. **Clique "Create"**
+2. **Vá em "Storage"** na aba lateral  
+3. **Clique em "Criar" no Upstash**
+4. **Descrição:** "BD sem servidor (Redis, Vector, Queue, Search)"
 
-### **2. Conectar ao Projeto**
+### **2. Configurar o Upstash**
 
-Após criar o KV:
+Na tela de configuração:
+
+1. **Nome:** `gafac-redis`
+2. **Região:** `us-east-1` (ou mais próxima)
+3. **Tipo:** `Regional` (gratuito)
+4. **Clique "Create Database"**
+
+### **3. Conectar ao Projeto**
+
+Após criar o Redis:
 
 1. **Clique em "Connect Project"**
 2. **Selecione:** `gafacvendas` (seu projeto)
 3. **Environment:** `Production`
 4. **Clique "Connect"**
 
-### **3. Variáveis de Ambiente Automáticas**
+### **4. Variáveis de Ambiente Automáticas**
 
 O Vercel adiciona automaticamente estas variáveis:
 
 ```bash
-KV_REST_API_URL=https://xxx-xxx.kv.vercel-storage.com
-KV_REST_API_TOKEN=xxx
-KV_REST_API_READ_ONLY_TOKEN=xxx  
-KV_URL=redis://xxx
+UPSTASH_REDIS_REST_URL=https://xxx-xxx.upstash.io
+UPSTASH_REDIS_REST_TOKEN=xxx
 ```
 
 ## ✅ **VANTAGENS DA MIGRAÇÃO:**
