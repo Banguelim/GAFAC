@@ -1,106 +1,33 @@
-// API Serverless completa para Vercel
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { eq, desc, sql } from 'drizzle-orm';
-import { join } from 'path';
-
-// Schema simplificado (apenas as tabelas necessárias)
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
-
-// Users table
-const users = sqliteTable('users', {
-  id: text('id').primaryKey().$defaultFn(() => globalThis.crypto.randomUUID()),
-  username: text('username').notNull().unique(),
-  name: text('name').notNull(),
-  password: text('password').notNull(),
-  role: text('role').notNull().default('vendor'),
-  active: integer('active', { mode: 'boolean' }).default(true),
-  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
-});
-
-// Products table
-const products = sqliteTable('products', {
-  id: text('id').primaryKey().$defaultFn(() => globalThis.crypto.randomUUID()),
-  name: text('name').notNull(),
-  type: text('type').notNull(),
-  size: text('size').notNull(),
-  price: real('price').notNull(),
-  active: integer('active', { mode: 'boolean' }).default(true),
-  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
-});
-
-// Orders table
-const orders = sqliteTable('orders', {
-  id: text('id').primaryKey().$defaultFn(() => globalThis.crypto.randomUUID()),
-  orderNumber: text('order_number').notNull().unique(),
-  customerName: text('customer_name').notNull(),
-  customerPhone: text('customer_phone').notNull(),
-  totalAmount: real('total_amount').notNull(),
-  paymentMethod: text('payment_method').notNull(),
-  paymentStatus: text('payment_status').notNull().default('pendente'),
-  deliveryStatus: text('delivery_status').notNull().default('preparando'),
-  vendorId: text('vendor_id'),
-  notes: text('notes'),
-  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
-});
-
-// Order items table
-const orderItems = sqliteTable('order_items', {
-  id: text('id').primaryKey().$defaultFn(() => globalThis.crypto.randomUUID()),
-  orderId: text('order_id').notNull(),
-  productId: text('product_id').notNull(),
-  quantity: integer('quantity').notNull(),
-  unitPrice: real('unit_price').notNull(),
-  totalPrice: real('total_price').notNull(),
-});
-
-// Configurar banco de dados
-let db;
-try {
-  const dbPath = join(process.cwd(), 'data.db');
-  const sqlite = new Database(dbPath);
-  sqlite.pragma('journal_mode = WAL');
-  db = drizzle({ client: sqlite, schema: { users, products, orders, orderItems } });
-} catch (error) {
-  console.error('Database initialization error:', error);
-}
-
-// Função para inicializar dados se necessário
-async function initializeData() {
-  try {
-    // Verificar se já existem produtos
-    const existingProducts = await db.select().from(products).limit(1);
-    if (existingProducts.length === 0) {
-      console.log('🌱 Inicializando produtos...');
-      
-      const productsData = [
-        { name: 'Canjiquinha', type: 'tipica', size: 'marmitex', price: 20 },
-        { name: 'Canjiquinha', type: 'tipica', size: 'cumbuquinha', price: 10 },
-        { name: 'Feijão amigo', type: 'tipica', size: 'marmitex', price: 20 },
-        { name: 'Feijão amigo', type: 'tipica', size: 'cumbuquinha', price: 10 },
-        { name: 'Vaca atolada', type: 'tipica', size: 'marmitex', price: 25 },
-        { name: 'Vaca atolada', type: 'tipica', size: 'cumbuquinha', price: 15 }
-      ];
-      
-      for (const product of productsData) {
-        await db.insert(products).values(product);
-      }
-    }
-    
-    // Verificar se existe usuário admin
-    const adminUser = await db.select().from(users).where(eq(users.username, 'admin')).limit(1);
-    if (adminUser.length === 0) {
-      console.log('👤 Criando usuário admin...');
-      await db.insert(users).values({
-        username: 'admin',
-        name: 'Administrador',
-        password: 'gafac123',
-        role: 'admin'
-      });
-    }
-  } catch (error) {
-    console.error('Initialization error:', error);
+// API Serverless simplificada para Vercel (in-memory data)
+// Dados em memória - serão reinicializados a cada deploy
+let users = [
+  {
+    id: '1',
+    username: 'admin',
+    name: 'Administrador',
+    password: 'gafac123',
+    role: 'admin',
+    active: true,
+    createdAt: new Date().toISOString()
   }
+];
+
+let products = [
+  { id: '1', name: 'Canjiquinha', type: 'tipica', size: 'marmitex', price: 20, active: true },
+  { id: '2', name: 'Canjiquinha', type: 'tipica', size: 'cumbuquinha', price: 10, active: true },
+  { id: '3', name: 'Feijão amigo', type: 'tipica', size: 'marmitex', price: 20, active: true },
+  { id: '4', name: 'Feijão amigo', type: 'tipica', size: 'cumbuquinha', price: 10, active: true },
+  { id: '5', name: 'Vaca atolada', type: 'tipica', size: 'marmitex', price: 25, active: true },
+  { id: '6', name: 'Vaca atolada', type: 'tipica', size: 'cumbuquinha', price: 15, active: true }
+];
+
+let orders = [];
+let orderItems = [];
+let orderCounter = 1;
+
+// Função para gerar IDs únicos
+function generateId() {
+  return Math.random().toString(36).substr(2, 9);
 }
 
 // Função para processar URL e extrair parâmetros
@@ -108,6 +35,29 @@ function parseUrl(url) {
   const parts = url.split('?')[0].split('/').filter(Boolean);
   const query = new URLSearchParams(url.split('?')[1] || '');
   return { parts, query };
+}
+
+// Função para parselar JSON do body
+function parseBody(req) {
+  return new Promise((resolve) => {
+    if (req.method === 'GET') {
+      resolve({});
+      return;
+    }
+
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (e) {
+        resolve({});
+      }
+    });
+  });
 }
 
 // Handler principal
@@ -127,136 +77,144 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Inicializar dados se necessário (apenas uma vez)
-  if (db) {
-    await initializeData();
-  }
-
   const { parts, query } = parseUrl(req.url);
   const path = '/' + parts.join('/');
 
   try {
+    // Parse body para requests POST/PUT
+    const body = await parseBody(req);
+
     // Health check
     if (path === '/api/health') {
       return res.status(200).json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
-        environment: 'vercel' 
+        environment: 'vercel',
+        users: users.length,
+        products: products.length,
+        orders: orders.length
       });
     }
 
     // Auth routes
     if (path === '/api/auth/login' && req.method === 'POST') {
-      const { username, password } = req.body;
+      const { username, password } = body;
       
-      const user = await db.select().from(users)
-        .where(eq(users.username, username))
-        .limit(1);
+      const user = users.find(u => u.username === username && u.password === password);
       
-      if (!user[0] || user[0].password !== password) {
+      if (!user) {
         return res.status(401).json({ message: 'Credenciais inválidas' });
       }
 
       return res.json({ 
         user: { 
-          id: user[0].id, 
-          username: user[0].username, 
-          name: user[0].name, 
-          role: user[0].role 
+          id: user.id, 
+          username: user.username, 
+          name: user.name, 
+          role: user.role 
         } 
       });
     }
 
     // Users routes
     if (path === '/api/users' && req.method === 'GET') {
-      const allUsers = await db.select().from(users);
-      return res.json(allUsers.map(u => ({ id: u.id, username: u.username, name: u.name, role: u.role })));
+      return res.json(users.map(u => ({ id: u.id, username: u.username, name: u.name, role: u.role })));
     }
 
     if (path === '/api/users' && req.method === 'POST') {
-      const { username, name, password, role = 'vendor' } = req.body;
+      const { username, name, password, role = 'vendor' } = body;
       
       if (!username || !name || !password) {
         return res.status(400).json({ message: 'Campos obrigatórios: username, name, password' });
       }
 
-      const newUser = await db.insert(users).values({
+      // Verificar se usuário já existe
+      if (users.find(u => u.username === username)) {
+        return res.status(400).json({ message: 'Usuário já existe' });
+      }
+
+      const newUser = {
+        id: generateId(),
         username,
         name,
         password,
-        role
-      }).returning();
+        role,
+        active: true,
+        createdAt: new Date().toISOString()
+      };
+
+      users.push(newUser);
 
       return res.status(201).json({ 
-        id: newUser[0].id, 
-        username: newUser[0].username, 
-        name: newUser[0].name, 
-        role: newUser[0].role 
+        id: newUser.id, 
+        username: newUser.username, 
+        name: newUser.name, 
+        role: newUser.role 
       });
     }
 
     // Products routes
     if (path === '/api/products' && req.method === 'GET') {
-      const allProducts = await db.select().from(products).where(eq(products.active, true));
-      return res.json(allProducts);
+      return res.json(products.filter(p => p.active));
     }
 
     if (path === '/api/products' && req.method === 'POST') {
-      const { name, type, size, price } = req.body;
+      const { name, type, size, price } = body;
       
-      const newProduct = await db.insert(products).values({
+      const newProduct = {
+        id: generateId(),
         name,
         type,
         size,
-        price: parseFloat(price)
-      }).returning();
+        price: parseFloat(price),
+        active: true,
+        createdAt: new Date().toISOString()
+      };
 
-      return res.status(201).json(newProduct[0]);
+      products.push(newProduct);
+      return res.status(201).json(newProduct);
     }
 
     // Orders routes
     if (path === '/api/orders' && req.method === 'GET') {
       const limit = query.get('limit') ? parseInt(query.get('limit')) : undefined;
       
-      let ordersQuery = db.select().from(orders).orderBy(desc(orders.createdAt));
-      if (limit) ordersQuery = ordersQuery.limit(limit);
-      
-      const allOrders = await ordersQuery;
+      // Ordenar por data de criação (mais recente primeiro)
+      const sortedOrders = orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const limitedOrders = limit ? sortedOrders.slice(0, limit) : sortedOrders;
       
       // Para cada pedido, buscar os itens
-      const ordersWithItems = await Promise.all(
-        allOrders.map(async (order) => {
-          const items = await db.select({
-            id: orderItems.id,
-            productId: orderItems.productId,
-            productName: products.name,
-            quantity: orderItems.quantity,
-            unitPrice: orderItems.unitPrice,
-            totalPrice: orderItems.totalPrice
-          })
-          .from(orderItems)
-          .leftJoin(products, eq(orderItems.productId, products.id))
-          .where(eq(orderItems.orderId, order.id));
-          
-          return { ...order, items };
-        })
-      );
+      const ordersWithItems = limitedOrders.map(order => {
+        const items = orderItems
+          .filter(item => item.orderId === order.id)
+          .map(item => {
+            const product = products.find(p => p.id === item.productId);
+            return {
+              ...item,
+              productName: product ? product.name : 'Produto não encontrado'
+            };
+          });
+        
+        return { ...order, items };
+      });
       
       return res.json(ordersWithItems);
     }
 
     if (path === '/api/orders' && req.method === 'POST') {
-      const { order, items } = req.body;
+      const { order, items } = body;
       
-      if (!order || !items) {
+      if (!order || !items || !Array.isArray(items)) {
         return res.status(400).json({ message: 'Order e items são obrigatórios' });
       }
 
       // Gerar número do pedido
       const orderNumber = `ORD-${Date.now()}`;
+      const orderId = generateId();
       
       // Criar o pedido
-      const newOrder = await db.insert(orders).values({
+      const newOrder = {
+        id: orderId,
         orderNumber,
         customerName: order.customerName,
         customerPhone: order.customerPhone,
@@ -265,80 +223,86 @@ export default async function handler(req, res) {
         paymentStatus: order.paymentStatus || 'pendente',
         deliveryStatus: order.deliveryStatus || 'preparando',
         vendorId: order.vendorId,
-        notes: order.notes
-      }).returning();
+        notes: order.notes,
+        createdAt: new Date().toISOString()
+      };
+
+      orders.push(newOrder);
 
       // Criar os itens do pedido
-      for (const item of items) {
-        await db.insert(orderItems).values({
-          orderId: newOrder[0].id,
-          productId: item.productId,
-          quantity: parseInt(item.quantity),
-          unitPrice: parseFloat(item.unitPrice),
-          totalPrice: parseFloat(item.totalPrice)
-        });
-      }
+      const newItems = items.map(item => ({
+        id: generateId(),
+        orderId: orderId,
+        productId: item.productId,
+        quantity: parseInt(item.quantity),
+        unitPrice: parseFloat(item.unitPrice),
+        totalPrice: parseFloat(item.totalPrice)
+      }));
 
-      // Buscar o pedido completo com itens
-      const orderWithItems = await db.select().from(orders).where(eq(orders.id, newOrder[0].id));
-      const orderItemsData = await db.select().from(orderItems).where(eq(orderItems.orderId, newOrder[0].id));
-      
-      return res.status(201).json({ ...orderWithItems[0], items: orderItemsData });
+      orderItems.push(...newItems);
+
+      return res.status(201).json({ ...newOrder, items: newItems });
     }
 
     // Update order
     if (path.startsWith('/api/orders/') && !path.includes('/status') && !path.includes('/ticket') && req.method === 'PUT') {
       const orderId = parts[2];
-      const { order, items } = req.body;
+      const { order: orderUpdate, items: itemsUpdate } = body;
       
+      // Encontrar e atualizar o pedido
+      const orderIndex = orders.findIndex(o => o.id === orderId);
+      if (orderIndex === -1) {
+        return res.status(404).json({ message: 'Pedido não encontrado' });
+      }
+
       // Atualizar dados do pedido
-      if (order) {
-        await db.update(orders)
-          .set({
-            customerName: order.customerName,
-            customerPhone: order.customerPhone,
-            totalAmount: order.totalAmount ? parseFloat(order.totalAmount) : undefined,
-            paymentMethod: order.paymentMethod,
-            paymentStatus: order.paymentStatus,
-            deliveryStatus: order.deliveryStatus,
-            notes: order.notes
-          })
-          .where(eq(orders.id, orderId));
+      if (orderUpdate) {
+        orders[orderIndex] = {
+          ...orders[orderIndex],
+          ...orderUpdate,
+          totalAmount: orderUpdate.totalAmount ? parseFloat(orderUpdate.totalAmount) : orders[orderIndex].totalAmount
+        };
       }
       
       // Se novos itens foram fornecidos, substituir todos
-      if (items) {
-        // Deletar itens existentes
-        await db.delete(orderItems).where(eq(orderItems.orderId, orderId));
+      if (itemsUpdate && Array.isArray(itemsUpdate)) {
+        // Remover itens existentes
+        orderItems = orderItems.filter(item => item.orderId !== orderId);
         
-        // Inserir novos itens
-        for (const item of items) {
-          await db.insert(orderItems).values({
-            orderId,
-            productId: item.productId,
-            quantity: parseInt(item.quantity),
-            unitPrice: parseFloat(item.unitPrice),
-            totalPrice: parseFloat(item.totalPrice)
-          });
-        }
+        // Adicionar novos itens
+        const newItems = itemsUpdate.map(item => ({
+          id: generateId(),
+          orderId: orderId,
+          productId: item.productId,
+          quantity: parseInt(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+          totalPrice: parseFloat(item.totalPrice)
+        }));
+
+        orderItems.push(...newItems);
       }
       
-      // Retornar pedido atualizado
-      const updatedOrder = await db.select().from(orders).where(eq(orders.id, orderId));
-      const updatedItems = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+      // Retornar pedido atualizado com itens
+      const updatedOrder = orders[orderIndex];
+      const updatedItems = orderItems.filter(item => item.orderId === orderId);
       
-      return res.json({ ...updatedOrder[0], items: updatedItems });
+      return res.json({ ...updatedOrder, items: updatedItems });
     }
 
     // Delete order
     if (path.startsWith('/api/orders/') && req.method === 'DELETE') {
       const orderId = parts[2];
       
-      // Deletar itens primeiro
-      await db.delete(orderItems).where(eq(orderItems.orderId, orderId));
+      // Remover itens do pedido
+      orderItems = orderItems.filter(item => item.orderId !== orderId);
       
-      // Deletar pedido
-      await db.delete(orders).where(eq(orders.id, orderId));
+      // Remover pedido
+      const orderIndex = orders.findIndex(o => o.id === orderId);
+      if (orderIndex === -1) {
+        return res.status(404).json({ message: 'Pedido não encontrado' });
+      }
+
+      orders.splice(orderIndex, 1);
       
       return res.json({ message: 'Pedido deletado com sucesso' });
     }
@@ -347,14 +311,13 @@ export default async function handler(req, res) {
     if (path === '/api/stats' && req.method === 'GET') {
       const today = new Date().toISOString().split('T')[0];
       
-      const allOrders = await db.select().from(orders);
-      const todayOrders = allOrders.filter(o => o.createdAt?.startsWith(today));
+      const todayOrders = orders.filter(o => o.createdAt.startsWith(today));
       
       const stats = {
         ordersToday: todayOrders.length,
         revenueToday: todayOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0),
-        pendingPayments: allOrders.filter(o => o.paymentStatus === 'pendente').length,
-        pendingDeliveries: allOrders.filter(o => o.deliveryStatus === 'preparando').length
+        pendingPayments: orders.filter(o => o.paymentStatus === 'pendente').length,
+        pendingDeliveries: orders.filter(o => o.deliveryStatus === 'preparando').length
       };
       
       return res.json(stats);
@@ -371,7 +334,8 @@ export default async function handler(req, res) {
     console.error('API Error:', error);
     return res.status(500).json({ 
       message: 'Internal server error',
-      error: error.message 
+      error: error.message,
+      stack: error.stack
     });
   }
 }
