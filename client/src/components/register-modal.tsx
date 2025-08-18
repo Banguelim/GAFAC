@@ -89,7 +89,7 @@ export default function RegisterModal({ isOpen, onClose, onLoginClick }: Registe
               id="name"
               placeholder="Digite seu nome completo"
               {...register('name')}
-              error={errors.name?.message}
+
             />
           </div>
 
@@ -99,7 +99,7 @@ export default function RegisterModal({ isOpen, onClose, onLoginClick }: Registe
               id="username"
               placeholder="Escolha um nome de usuário"
               {...register('username')}
-              error={errors.username?.message}
+
             />
           </div>
 
@@ -111,7 +111,7 @@ export default function RegisterModal({ isOpen, onClose, onLoginClick }: Registe
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Digite uma senha"
                 {...register('password')}
-                error={errors.password?.message}
+
               />
               <Button
                 type="button"
@@ -137,7 +137,7 @@ export default function RegisterModal({ isOpen, onClose, onLoginClick }: Registe
                 type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Digite a senha novamente"
                 {...register('confirmPassword')}
-                error={errors.confirmPassword?.message}
+
               />
               <Button
                 type="button"

@@ -118,18 +118,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("❌ Erro detalhado ao criar pedido:", error);
       
       // Se for erro de validação Zod, retornar detalhes
-      if (error.name === 'ZodError') {
+      if ((error as any)?.name === 'ZodError') {
         return res.status(400).json({ 
           message: "Dados inválidos", 
-          details: error.errors,
+          details: (error as any).errors,
           received: req.body 
         });
       }
       
       // Outros erros
       res.status(400).json({ 
-        message: error.message || "Erro ao criar pedido",
-        error: error.toString()
+        message: (error as any)?.message || "Erro ao criar pedido",
+        error: (error as any)?.toString()
       });
     }
   });
@@ -150,15 +150,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Update order error:", error);
       
-      if (error.name === 'ZodError') {
+      if ((error as any)?.name === 'ZodError') {
         return res.status(400).json({ 
           message: "Dados inválidos para atualização", 
-          details: error.errors 
+          details: (error as any).errors 
         });
       }
       
       res.status(400).json({ 
-        message: error.message || "Falha ao atualizar pedido" 
+        message: (error as any)?.message || "Falha ao atualizar pedido" 
       });
     }
   });
@@ -174,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Delete order error:", error);
       res.status(400).json({ 
-        message: error.message || "Falha ao deletar pedido" 
+        message: (error as any)?.message || "Falha ao deletar pedido" 
       });
     }
   });

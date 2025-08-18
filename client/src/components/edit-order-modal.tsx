@@ -69,11 +69,11 @@ export default function EditOrderModal({ isOpen, onClose, order }: EditOrderModa
   useEffect(() => {
     if (order) {
       form.reset({
-        customerName: order.customerName,
+        customerName: order.customerName || "",
         customerPhone: order.customerPhone || "",
-        paymentMethod: order.paymentMethod,
-        paymentStatus: order.paymentStatus,
-        deliveryStatus: order.deliveryStatus,
+        paymentMethod: order.paymentMethod as "dinheiro" | "pix" | "aberto",
+        paymentStatus: order.paymentStatus as "realizado" | "pendente",
+        deliveryStatus: order.deliveryStatus as "realizada" | "pendente",
       });
 
       // Converter itens do pedido para produtos selecionados

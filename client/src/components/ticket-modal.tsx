@@ -107,15 +107,15 @@ export default function TicketModal({ isOpen, onClose, orderId }: TicketModalPro
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
                   <span>Forma Pagto:</span>
-                  <span>{PAYMENT_METHODS[order.paymentMethod]}</span>
+                  <span>{PAYMENT_METHODS[order.paymentMethod as keyof typeof PAYMENT_METHODS]}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Status Pagto:</span>
-                  <span>{STATUS_LABELS[order.paymentStatus]} {order.paymentStatus === 'realizado' ? '✅' : '⏳'}</span>
+                  <span>{STATUS_LABELS[order.paymentStatus as keyof typeof STATUS_LABELS]} {order.paymentStatus === 'realizado' ? '✅' : '⏳'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Status Entrega:</span>
-                  <span>{STATUS_LABELS[order.deliveryStatus]} {order.deliveryStatus === 'realizada' ? '✅' : '⏳'}</span>
+                  <span>{STATUS_LABELS[order.deliveryStatus as keyof typeof STATUS_LABELS]} {order.deliveryStatus === 'realizada' ? '✅' : '⏳'}</span>
                 </div>
               </div>
 

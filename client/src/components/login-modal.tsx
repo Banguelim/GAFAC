@@ -76,7 +76,7 @@ export default function LoginModal({ isOpen, onClose, onRegisterClick }: LoginMo
               id="username"
               placeholder="Digite seu nome de usuário"
               {...register('username')}
-              error={errors.username?.message}
+
             />
           </div>
 
@@ -88,7 +88,7 @@ export default function LoginModal({ isOpen, onClose, onRegisterClick }: LoginMo
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Digite sua senha"
                 {...register('password')}
-                error={errors.password?.message}
+
               />
               <Button
                 type="button"
