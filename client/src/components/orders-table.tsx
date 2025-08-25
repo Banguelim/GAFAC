@@ -42,6 +42,7 @@ export default function OrdersTable() {
 
   const filteredOrders = orders?.filter(order => 
     order.orderNumber.toString().includes(searchTerm) ||
+    (order.customerName && order.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (order.vendor?.name && order.vendor.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (order.items && order.items.some(item => 
       item.product?.name && item.product.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -108,7 +109,7 @@ export default function OrdersTable() {
         <CardTitle className="text-xl">Pedidos Recentes</CardTitle>
         <div className="flex gap-2">
           <Input
-            placeholder="Buscar pedidos..."
+            placeholder="Buscar por cliente, produto ou vendedor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64"
@@ -124,7 +125,7 @@ export default function OrdersTable() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Pedido</TableHead>
+                <TableHead>Cliente</TableHead>
                 <TableHead>Produto</TableHead>
                 <TableHead>Vendedor</TableHead>
                 <TableHead>Valor</TableHead>
@@ -138,10 +139,10 @@ export default function OrdersTable() {
                 <TableRow key={order.id} className="hover:bg-gray-50">
                   <TableCell>
                     <div className="font-medium text-gray-900">
-                      #{order.orderNumber.toString().padStart(3, '0')}
+                      {order.customerName || 'Cliente não informado'}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString('pt-BR')} {' '}
+                      #{order.orderNumber.toString().padStart(3, '0')} • {new Date(order.createdAt).toLocaleDateString('pt-BR')} {' '}
                       {new Date(order.createdAt).toLocaleTimeString('pt-BR', {
                         hour: '2-digit',
                         minute: '2-digit'
